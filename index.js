@@ -33,20 +33,29 @@ const getFileNameFromId = (id) => {
   return id.replace(/{|}/g, "");
 };
 
-const setWallpaperForSpace = (pathToImage) => {
-  return setWallpaper(`.wallpapers/${getFileNameFromId(pathToImage)}`);
+const setWallpaperForSpace = async (pathToImage) => {
+  try {
+    await setWallpaper(`.wallpapers/${getFileNameFromId(pathToImage)}`);
+    console.log(`Wallpaper set to: ${pathToImage}`);
+  } catch (err) {
+    console.error(`Failed to set wallpaper: ${err.message}`);
+  }
 };
 
 const watchPrefsFileAndUpdateWallpapers = (prefsFile) => {
   const watcher = new Watcher(prefsFile, { persistent: true, interval: 1000 });
   watcher.on("change", async () => {
-    const prefsContent = fs.readFileSync(prefsFile, "utf-8");
-    const spaceIdMatch = prefsContent.match(
-      /user_pref\("zen.workspaces.active", "([^"]+)"\);/,
-    );
-    if (spaceIdMatch && spaceIdMatch[1]) {
-      const activeSpaceId = spaceIdMatch[1];
-      await setWallpaperForSpace(activeSpaceId);
+    try {
+      const prefsContent = fs.readFileSync(prefsFile, "utf-8");
+      const spaceIdMatch = prefsContent.match(
+        /user_pref\("zen.workspaces.active", "([^"]+)"\);/,
+      );
+      if (spaceIdMatch && spaceIdMatch[1]) {
+        const activeSpaceId = spaceIdMatch[1];
+        await setWallpaperForSpace(activeSpaceId);
+      }
+    } catch (err) {
+      console.error(`Failed to update wallpaper: ${err.message}`);
     }
   });
 };
@@ -54,7 +63,10 @@ const watchPrefsFileAndUpdateWallpapers = (prefsFile) => {
 const moveFileToWallpapersDir = (filePath, id) => {
   const wallpapersDir = path.join(__dirname, ".wallpapers");
   if (!fs.existsSync(wallpapersDir)) {
-    fs.mkdirSync(wallpapersDir);
+    fs.mkdirSync(wallpapersDir, { recursive: true });
+  }
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`File does not exist: ${filePath}`);
   }
   const destPath = path.join(wallpapersDir, getFileNameFromId(id));
   fs.copyFileSync(filePath, destPath);
