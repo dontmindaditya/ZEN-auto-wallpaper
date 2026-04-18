@@ -18,10 +18,10 @@
     "url": "https://github.com/mr-cheffy/zen-auto-wallpaper/issues"
   },
   "homepage": "https://github.com/mr-cheffy/zen-auto-wallpaper#readme",
-  "dependencies": {
-    "inquirer": "^13.1.0",
+"dependencies": {
+    "inquirer": "^13.4.1",
     "lz4": "^0.6.5",
-    "wallpaper": "^7.2.1",
+    "wallpaper": "^7.2.2",
     "watcher": "^2.3.1",
     "when-exit": "^2.1.5"
   }

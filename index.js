@@ -13,6 +13,26 @@ const zenGlobalFile = os.platform() === "win32" ?
   `${userHomeDir}/Library/Application Support/zen/Profiles/`;
 const defaultWallpapersDir = path.join(userHomeDir, "Documents/Wallpapers");
 
+const args = process.argv.slice(2);
+const verbose = args.includes("--verbose") || args.includes("-v");
+const showHelp = args.includes("--help") || args.includes("-h");
+
+if (showHelp) {
+  console.log(`Usage: node index.js [options]
+Options:
+  --profile=<name>  Specify Zen profile to use
+  --verbose, -v     Enable verbose logging
+  --help, -h        Show this help message
+`);
+  process.exit(0);
+}
+
+const log = (...args) => {
+  if (verbose) {
+    console.log("[verbose]", ...args);
+  }
+};
+
 const decompressMozLZ4 = (inputBuffer) => {
   let outputBuffer;
   if (!Buffer.isBuffer(inputBuffer)) {
@@ -143,7 +163,6 @@ const runWithProfile = async (profileName) => {
 };
 
 const start = async () => {
-  const args = process.argv.slice(2);
   const profileFromArgs = args.find(arg => arg.startsWith("--profile="));
   const profileName = profileFromArgs ? profileFromArgs.split("=")[1] : null;
 
@@ -151,6 +170,8 @@ const start = async () => {
     console.error(`Zen profiles directory not found: ${zenGlobalFile}`);
     process.exit(1);
   }
+
+  log("Using Zen profiles directory:", zenGlobalFile);
 
   const availableProfiles = fs.readdirSync(zenGlobalFile).filter((file) => {
     return fs.statSync(path.join(zenGlobalFile, file)).isDirectory();
