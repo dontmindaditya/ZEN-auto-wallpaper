@@ -142,27 +142,47 @@ const runWithProfile = async (profileName) => {
   console.log("All wallpapers have been set.");
 };
 
-// Get all the folders inside the zenGlobalFile directory and
-// make the user choose one of them
-const availableProfiles = fs.readdirSync(zenGlobalFile).filter((file) => {
-  return fs.statSync(path.join(zenGlobalFile, file)).isDirectory();
-});
-if (availableProfiles.length > 1) {
-  inquirer
-    .prompt([
-      {
-        type: "rawlist",
-        name: "profile",
-        message:
-          "Select a Zen profile to use for wallpaper (about:support to see current profile):",
-        choices: availableProfiles,
-      },
-    ])
-    .then((answers) => {
-      runWithProfile(answers.profile);
-    });
-} else if (availableProfiles.length === 1) {
-  runWithProfile(availableProfiles[0]);
-} else {
-  console.error("No profiles found.");
-}
+const start = async () => {
+  const args = process.argv.slice(2);
+  const profileFromArgs = args.find(arg => arg.startsWith("--profile="));
+  const profileName = profileFromArgs ? profileFromArgs.split("=")[1] : null;
+
+  if (!fs.existsSync(zenGlobalFile)) {
+    console.error(`Zen profiles directory not found: ${zenGlobalFile}`);
+    process.exit(1);
+  }
+
+  const availableProfiles = fs.readdirSync(zenGlobalFile).filter((file) => {
+    return fs.statSync(path.join(zenGlobalFile, file)).isDirectory();
+  });
+
+  if (availableProfiles.length === 0) {
+    console.error("No profiles found.");
+    process.exit(1);
+  }
+
+  if (profileName && availableProfiles.includes(profileName)) {
+    await runWithProfile(profileName);
+  } else if (availableProfiles.length === 1) {
+    await runWithProfile(availableProfiles[0]);
+  } else if (profileName) {
+    console.error(`Profile "${profileName}" not found. Available: ${availableProfiles.join(", ")}`);
+    process.exit(1);
+  } else {
+    inquirer
+      .prompt([
+        {
+          type: "rawlist",
+          name: "profile",
+          message:
+            "Select a Zen profile to use for wallpaper (about:support to see current profile):",
+          choices: availableProfiles,
+        },
+      ])
+      .then((answers) => {
+        runWithProfile(answers.profile);
+      });
+  }
+};
+
+start();
