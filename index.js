@@ -77,19 +77,26 @@ const runWithProfile = async (profileName) => {
   const profilePath = path.join(zenGlobalFile, profileName);
   const prefsFile = path.join(profilePath, "prefs.js");
   const sessionFile = path.join(profilePath, "zen-sessions.jsonlz4");
-  const sessionFileContent = decompressMozLZ4(fs.readFileSync(sessionFile));
-  
+
+  let sessionFileContent;
+  try {
+    sessionFileContent = decompressMozLZ4(fs.readFileSync(sessionFile));
+  } catch (err) {
+    console.error(`Failed to read session file: ${err.message}`);
+    process.exit(1);
+  }
+
   let oldWallpaper;
   try {
     oldWallpaper = await getWallpaper();
     moveFileToWallpapersDir(oldWallpaper, "default");
-  } catch {
-    console.log("Failed to backup old wallpaper.");
+  } catch (err) {
+    console.log(`Failed to backup old wallpaper: ${err.message}`);
   }
 
-  whenExit(() => {
+  whenExit(async () => {
     if (oldWallpaper) {
-      setWallpaperForSpace("default");
+      await setWallpaperForSpace("default");
       console.log("Restored old wallpaper.");
     }
   });
