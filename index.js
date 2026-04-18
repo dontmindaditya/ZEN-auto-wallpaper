@@ -13,14 +13,12 @@ const zenGlobalFile = os.platform() === "win32" ?
   `${userHomeDir}/Library/Application Support/zen/Profiles/`;
 const defaultWallpapersDir = path.join(userHomeDir, "Documents/Wallpapers");
 
-var decompressMozLZ4 = function (inputBuffer) {
-  var outputBuffer;
-  // Verify inputBuffer is a buffer
+const decompressMozLZ4 = (inputBuffer) => {
+  let outputBuffer;
   if (!Buffer.isBuffer(inputBuffer)) {
     throw new Error("Input is not of type Buffer");
     return false;
   }
-  // Verifiy custom Mozilla LZ4 header / Magic number
   if (inputBuffer.slice(0, 8).toString() !== "mozLz40\0") {
     throw new Error("Input does not seem to be jsonlz4 format");
     return false;
@@ -107,7 +105,7 @@ const runWithProfile = async (profileName) => {
     .then(async (answers) => {
       spaces.forEach((space, index) => {
         let imagePath = answers[`space_${index}`];
-	imagePath = path.isAbsolute(imagePath) ? imagePath : path.join(defaultWallpapersDir, imagePath);
+        imagePath = path.isAbsolute(imagePath) ? imagePath : path.join(defaultWallpapersDir, imagePath);
         const storedPath = moveFileToWallpapersDir(imagePath, space.uuid);
         space.wallpaperPath = storedPath;
         console.log(
