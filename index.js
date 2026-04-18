@@ -104,14 +104,13 @@ const runWithProfile = async (profileName) => {
   const spaces = sessionFileContent.spaces;
 
   for (const space of spaces) {
-    const defaultName = space.name.replace(" ", "").toLowerCase() + ".jpg";
+    const defaultName = space.name.replace(/ /g, "").toLowerCase() + ".jpg";
     const defaultPath = path.join(defaultWallpapersDir, defaultName);
     if (fs.existsSync(defaultPath)) {
       space.default = defaultPath;
     }
   }
 
-  // Ask for image path for each space
   inquirer
     .prompt([
       ...spaces.map((space, index) => ({
@@ -122,17 +121,22 @@ const runWithProfile = async (profileName) => {
       })),
     ])
     .then(async (answers) => {
-      spaces.forEach((space, index) => {
-        let imagePath = answers[`space_${index}`];
-        imagePath = path.isAbsolute(imagePath) ? imagePath : path.join(defaultWallpapersDir, imagePath);
-        const storedPath = moveFileToWallpapersDir(imagePath, space.uuid);
-        space.wallpaperPath = storedPath;
-        console.log(
-          `Set wallpaper for space "${space.name}" to "${storedPath}"`,
-        );
-      });
-      watchPrefsFileAndUpdateWallpapers(prefsFile);
-      console.log("Watching for workspace changes...");
+      try {
+        spaces.forEach((space, index) => {
+          let imagePath = answers[`space_${index}`];
+          imagePath = path.isAbsolute(imagePath) ? imagePath : path.join(defaultWallpapersDir, imagePath);
+          const storedPath = moveFileToWallpapersDir(imagePath, space.uuid);
+          space.wallpaperPath = storedPath;
+          console.log(
+            `Set wallpaper for space "${space.name}" to "${storedPath}"`,
+          );
+        });
+        watchPrefsFileAndUpdateWallpapers(prefsFile);
+        console.log("Watching for workspace changes...");
+      } catch (err) {
+        console.error(`Failed to process answers: ${err.message}`);
+        process.exit(1);
+      }
     });
 
   console.log("All wallpapers have been set.");
